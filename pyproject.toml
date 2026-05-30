@@ -48,4 +48,4 @@ line-ending = "auto"
 
 [tool.ruff.lint.isort]
 # Import sorting
-known-first-party = ["config_manager", "screenshot_tray", "screenshot_capture", "region_selector", "config_dialog"]
+known-first-party = ["src.config_manager", "src.screenshot_tray", "src.screenshot_capture", "src.region_selector", "src.config_dialog"]

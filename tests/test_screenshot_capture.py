@@ -5,8 +5,8 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from config_manager import Config
-from screenshot_tray import ScreenshotCapture
+from src.config_manager import Config
+from src.screenshot_tray import ScreenshotCapture
 
 
 class TestScreenshotCapture:
@@ -125,7 +125,7 @@ class TestScreenshotCapture:
         test_file.write_text("fake image")
 
         with (
-            patch("screenshot_tray.MediaFileUpload"),
+            patch("src.screenshot_tray.MediaFileUpload"),
             patch.object(screenshot_capturer.circuit_breaker, "call", return_value=True),
         ):
             result = screenshot_capturer.upload_to_drive(test_file)
@@ -141,7 +141,7 @@ class TestScreenshotCapture:
         test_file.write_text("fake image")
 
         with (
-            patch("screenshot_tray.MediaFileUpload"),
+            patch("src.screenshot_tray.MediaFileUpload"),
             patch.object(screenshot_capturer.circuit_breaker, "call", side_effect=Exception("Upload failed")),
         ):
             result = screenshot_capturer.upload_to_drive(test_file)

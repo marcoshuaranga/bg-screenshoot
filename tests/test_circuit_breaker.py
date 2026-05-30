@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import pytest
 from freezegun import freeze_time
 
-from screenshot_tray import CircuitBreaker, CircuitState
+from src.screenshot_tray import CircuitBreaker, CircuitState
 
 
 class TestCircuitBreaker:

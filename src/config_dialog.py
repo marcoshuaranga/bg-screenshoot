@@ -5,7 +5,7 @@ import logging
 import tkinter as tk
 from tkinter import messagebox, ttk
 
-from config_manager import Config
+from src.config_manager import Config
 
 logger = logging.getLogger(__name__)
 

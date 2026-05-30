@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 import pytest
 from googleapiclient.errors import HttpError
 
-from screenshot_tray import ErrorType, classify_error, retry_with_backoff
+from src.screenshot_tray import ErrorType, classify_error, retry_with_backoff
 
 
 class TestErrorClassification:

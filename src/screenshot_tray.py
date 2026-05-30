@@ -17,14 +17,14 @@ from googleapiclient.http import MediaFileUpload
 from PIL import Image, ImageDraw
 from pystray import MenuItem
 
-from config_dialog import ConfigDialog
-from config_manager import Config
-from region_selector import RegionSelector
+from src.config_dialog import ConfigDialog
+from src.config_manager import Config
+from src.region_selector import RegionSelector
 
 SCOPES = ["https://www.googleapis.com/auth/drive.file"]
 
 # Setup logging with daily rotation
-log_folder = Path(__file__).parent / "logs"
+log_folder = Path(__file__).parent.parent / "logs"
 log_folder.mkdir(exist_ok=True)
 log_file = log_folder / "screenshot_capture.log"
 

@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, Mock
 
 import pytest
 
-from config_manager import Config
+from src.config_manager import Config
 
 
 @pytest.fixture

@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from region_selector import RegionSelector
+from src.region_selector import RegionSelector
 
 
 class TestRegionSelector:

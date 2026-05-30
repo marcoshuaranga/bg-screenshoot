@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from config_manager import DEFAULT_CONFIG, Config
+from src.config_manager import DEFAULT_CONFIG, Config
 
 
 class TestConfig:
