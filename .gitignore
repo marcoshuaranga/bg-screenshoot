@@ -1,0 +1,15 @@
+credentials.json
+token.pickle
+.venv/
+.coverage
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+logs/
