@@ -17,12 +17,14 @@ A command-line tool to automatically take screenshots in the background and save
 
 ## Installation
 
-1. Install Python dependencies using uv:
+1. Create a virtual environment with a supported Python version (Python 3.13 is recommended for this project):
 
 ```bash
-uv venv
+uv venv --python 3.13
 uv pip install -r requirements.txt
 ```
+
+> If you use Python 3.14 on Windows, Pillow may fail to build from source during installation.
 
 2. **(Optional)** Setup Google Drive integration:
    - Follow the guide in [docs/GDRIVE_SETUP.md](docs/GDRIVE_SETUP.md)
