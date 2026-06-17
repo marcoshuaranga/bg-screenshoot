@@ -8,21 +8,6 @@ import yaml
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_CONFIG = {
-    "screenshot": {
-        "interval": 60,
-        "prefix": "screenshot",
-        "local_folder": "E:/Users/maracudev/OneDrive/Imágenes/BG_Screenshots",
-        "region": None,  # (x, y, width, height) or None for fullscreen
-    },
-    "google_drive": {"enabled": True, "folder": "BG_Screenshots"},
-    "error_handling": {
-        "max_retries": 3,
-        "retry_delay": 2,
-        "circuit_breaker": {"failure_threshold": 5, "timeout_duration": 300, "success_threshold": 2},
-    },
-}
-
 
 class Config:
     def __init__(self, config_file="config.yaml"):
@@ -30,23 +15,89 @@ class Config:
         self.data = self._load()
 
     def _load(self) -> dict[str, Any]:
-        """Load configuration from YAML file"""
+        """Load and validate configuration from YAML file."""
         if not self.config_file.exists():
-            logger.info(f"Creating default config: {self.config_file}")
-            self._save(DEFAULT_CONFIG)
-            return DEFAULT_CONFIG.copy()
+            raise FileNotFoundError(
+                f"Configuration file not found: {self.config_file}. "
+                "Copy config.example.yaml to config.yaml and adjust the values."
+            )
 
         try:
             with open(self.config_file, encoding="utf-8") as f:
                 config = yaml.safe_load(f)
-                logger.info(f"✅ Config loaded: {self.config_file}")
-                return config
-        except Exception as e:
-            logger.error(f"❌ Failed to load config: {e}")
-            return DEFAULT_CONFIG.copy()
+        except yaml.YAMLError as e:
+            raise ValueError(f"Invalid YAML in {self.config_file}: {e}") from e
+
+        if not isinstance(config, dict):
+            raise ValueError(f"Configuration file {self.config_file} must contain a YAML object.")
+
+        self._validate_config(config)
+        logger.info(f"✅ Config loaded: {self.config_file}")
+        return config
+
+    def _validate_config(self, config: dict[str, Any]) -> None:
+        """Validate the required configuration schema and values."""
+        screenshot = config.get("screenshot")
+        if not isinstance(screenshot, dict):
+            raise ValueError("Missing or invalid 'screenshot' section in config.yaml")
+
+        interval = screenshot.get("interval")
+        if not isinstance(interval, int) or interval <= 0:
+            raise ValueError("'screenshot.interval' must be a positive integer")
+
+        prefix = screenshot.get("prefix")
+        if not isinstance(prefix, str) or not prefix.strip():
+            raise ValueError("'screenshot.prefix' must be a non-empty string")
+
+        local_folder = screenshot.get("local_folder")
+        if not isinstance(local_folder, str) or not local_folder.strip():
+            raise ValueError("'screenshot.local_folder' must be a non-empty path string")
+
+        region = screenshot.get("region")
+        if region is not None:
+            if not (isinstance(region, list) and len(region) == 4):
+                raise ValueError("'screenshot.region' must be null or a list of four integers")
+            if not all(isinstance(v, int) and v >= 0 for v in region):
+                raise ValueError("'screenshot.region' values must be non-negative integers")
+
+        google_drive = config.get("google_drive")
+        if not isinstance(google_drive, dict):
+            raise ValueError("Missing or invalid 'google_drive' section in config.yaml")
+
+        enabled = google_drive.get("enabled")
+        if not isinstance(enabled, bool):
+            raise ValueError("'google_drive.enabled' must be a boolean")
+
+        folder = google_drive.get("folder")
+        if not isinstance(folder, str) or not folder.strip():
+            raise ValueError("'google_drive.folder' must be a non-empty string")
+
+        error_handling = config.get("error_handling")
+        if not isinstance(error_handling, dict):
+            raise ValueError("Missing or invalid 'error_handling' section in config.yaml")
+
+        max_retries = error_handling.get("max_retries")
+        if not isinstance(max_retries, int) or max_retries <= 0:
+            raise ValueError("'error_handling.max_retries' must be a positive integer")
+
+        retry_delay = error_handling.get("retry_delay")
+        if not isinstance(retry_delay, int) or retry_delay < 0:
+            raise ValueError("'error_handling.retry_delay' must be a non-negative integer")
+
+        circuit_breaker = error_handling.get("circuit_breaker")
+        if not isinstance(circuit_breaker, dict):
+            raise ValueError("Missing or invalid 'error_handling.circuit_breaker' section in config.yaml")
+
+        for key in ("failure_threshold", "timeout_duration", "success_threshold"):
+            value = circuit_breaker.get(key)
+            if not isinstance(value, int) or value <= 0:
+                raise ValueError(
+                    f"'error_handling.circuit_breaker.{key}' must be a positive integer"
+                )
 
     def _save(self, data: dict[str, Any]):
-        """Save configuration to YAML file"""
+        """Save configuration to YAML file."""
+        self._validate_config(data)
         try:
             with open(self.config_file, "w", encoding="utf-8") as f:
                 yaml.dump(data, f, default_flow_style=False, allow_unicode=True)

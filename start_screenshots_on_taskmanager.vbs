@@ -1,4 +1,9 @@
 REM Screenshot Capture - Task Manager Control (reads config from config.yaml)
 Set WshShell = CreateObject("WScript.Shell")
-WshShell.Run """E:\Users\maracudev\DevDrive\hobby\background-screenshot\.venv\Scripts\pythonw.exe"" -m src.screenshot_capture", 0, False
+Set fso = CreateObject("Scripting.FileSystemObject")
+projectDir = fso.GetAbsolutePathName(".")
+pythonw = """" & projectDir & "\.venv\Scripts\pythonw.exe"""
+cmd = pythonw & " -m src.screenshot_capture"
+WshShell.Run cmd, 0, False
+Set fso = Nothing
 Set WshShell = Nothing

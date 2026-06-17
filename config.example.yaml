@@ -1,0 +1,17 @@
+# Example configuration for the project.
+# Copy this file to config.yaml and adjust the values for your machine.
+error_handling:
+  circuit_breaker:
+    failure_threshold: 5
+    success_threshold: 2
+    timeout_duration: 300
+  max_retries: 3
+  retry_delay: 2
+google_drive:
+  enabled: false
+  folder: BG_Screenshots
+screenshot:
+  interval: 60
+  local_folder: C:/Users/your-user/Pictures/Screenshots
+  prefix: screenshot
+  region: null

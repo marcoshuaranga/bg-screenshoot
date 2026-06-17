@@ -10,6 +10,8 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
+from src.config_manager import Config
+
 SCOPES = ["https://www.googleapis.com/auth/drive.file"]
 
 
@@ -76,50 +78,11 @@ def upload_to_drive(service, file_path, folder_id=None):
     return file.get("webViewLink")
 
 
-def get_default_screenshot_path():
-    """Get the default screenshot path"""
-    # Default to specific OneDrive path
-    default_path = Path("E:/Users/maracudev/OneDrive/Imágenes/BG_Screenshots")
-
-    # Create directory if it doesn't exist
-    default_path.mkdir(parents=True, exist_ok=True)
-
-    return default_path
-
-
-def get_desktop_path():
-    """Get the desktop path for Windows (fallback)"""
-    # Try common desktop paths
-    desktop = Path.home() / "Desktop"
-    if not desktop.exists():
-        # Try OneDrive Desktop
-        desktop = Path.home() / "OneDrive" / "Desktop"
-    if not desktop.exists():
-        # Try local user desktop
-        desktop = Path.home() / "OneDrive" / "Escritorio"  # Spanish
-    if not desktop.exists():
-        # Fallback to user home
-        desktop = Path.home()
-    return desktop
-
-
-def create_screenshot_folder(folder_name="Screenshots"):
-    """Create a folder on desktop if it doesn't exist"""
-    # If folder_name is "Screenshots" (default), use the default OneDrive path
-    if folder_name == "Screenshots":
-        return get_default_screenshot_path()
-
-    # If it's an absolute path, use it directly
-    if Path(folder_name).is_absolute():
-        folder_path = Path(folder_name)
-        folder_path.mkdir(parents=True, exist_ok=True)
-        return folder_path
-
-    # Otherwise, create in desktop
-    desktop_path = get_desktop_path()
-    screenshot_folder = desktop_path / folder_name
-    screenshot_folder.mkdir(parents=True, exist_ok=True)
-    return screenshot_folder
+def create_screenshot_folder(folder_path: str | Path) -> Path:
+    """Create and return a screenshot folder from a validated config path."""
+    path = Path(folder_path)
+    path.mkdir(parents=True, exist_ok=True)
+    return path
 
 
 def take_screenshot(save_folder, prefix="screenshot", upload_to_gdrive=False, drive_service=None, drive_folder_id=None):
@@ -142,83 +105,73 @@ def take_screenshot(save_folder, prefix="screenshot", upload_to_gdrive=False, dr
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Take screenshots in the background and save to desktop folder")
-    parser.add_argument(
-        "-i", "--interval", type=int, default=60, help="Interval between screenshots in seconds (default: 60)"
-    )
-    parser.add_argument(
-        "-f",
-        "--folder",
-        type=str,
-        default="Screenshots",
-        help="Folder name on desktop to save screenshots (default: Screenshots)",
-    )
-    parser.add_argument(
-        "-p", "--prefix", type=str, default="screenshot", help="Prefix for screenshot filenames (default: screenshot)"
-    )
-    parser.add_argument(
-        "-c", "--count", type=int, default=0, help="Number of screenshots to take (0 for infinite, default: 0)"
-    )
+    parser = argparse.ArgumentParser(description="Take screenshots using the validated local configuration")
+    parser.add_argument("-i", "--interval", type=int, default=None, help="Override interval in seconds")
+    parser.add_argument("-f", "--folder", type=str, default=None, help="Override output folder")
+    parser.add_argument("-p", "--prefix", type=str, default=None, help="Override screenshot prefix")
+    parser.add_argument("-c", "--count", type=int, default=None, help="Number of screenshots to take")
     parser.add_argument("-s", "--single", action="store_true", help="Take a single screenshot and exit")
     parser.add_argument("-g", "--gdrive", action="store_true", help="Upload screenshots to Google Drive")
-    parser.add_argument(
-        "-gf",
-        "--gdrive-folder",
-        type=str,
-        default="BG_Screenshots",
-        help="Google Drive folder name (default: BG_Screenshots)",
-    )
+    parser.add_argument("-gf", "--gdrive-folder", type=str, default=None, help="Override Google Drive folder")
 
     args = parser.parse_args()
+
+    config = Config()
+
+    interval = args.interval if args.interval is not None else config.interval
+    prefix = args.prefix if args.prefix is not None else config.prefix
+    folder = args.folder if args.folder is not None else config.local_folder
+    use_gdrive = args.gdrive or config.gdrive_enabled
+    drive_folder = args.gdrive_folder if args.gdrive_folder is not None else config.gdrive_folder
+    count = args.count if args.count is not None else 0
 
     # Setup Google Drive if enabled
     drive_service = None
     drive_folder_id = None
-    if args.gdrive:
+    if use_gdrive:
         print("🔐 Authenticating with Google Drive...")
         drive_service = get_google_drive_service()
         if not drive_service:
             print("❌ Google Drive authentication failed. Continuing without upload.")
         else:
             print("✅ Connected to Google Drive")
-            drive_folder_id = get_or_create_drive_folder(drive_service, args.gdrive_folder)
-            print(f"📁 Using Google Drive folder: {args.gdrive_folder}")
+            drive_folder_id = get_or_create_drive_folder(drive_service, drive_folder)
+            print(f"📁 Using Google Drive folder: {drive_folder}")
 
     # Create screenshot folder
-    screenshot_folder = create_screenshot_folder(args.folder)
+    screenshot_folder = create_screenshot_folder(folder)
     print(f"💾 Local folder: {screenshot_folder}")
 
     if args.single:
-        # Take a single screenshot
-        filepath = take_screenshot(screenshot_folder, args.prefix, args.gdrive, drive_service, drive_folder_id)
+        filepath = take_screenshot(screenshot_folder, prefix, use_gdrive, drive_service, drive_folder_id)
         status = "📸 Screenshot saved"
-        if args.gdrive and drive_service:
+        if use_gdrive and drive_service:
             status += " and uploaded to Google Drive"
         print(f"{status}: {filepath.name}")
         return
 
     # Continuous mode
-    print(f"Taking screenshots every {args.interval} seconds...")
+    print(f"Taking screenshots every {interval} seconds...")
     print("Press Ctrl+C to stop")
 
-    count = 0
+    captured = 0
     try:
         while True:
-            filepath = take_screenshot(screenshot_folder, args.prefix, args.gdrive, drive_service, drive_folder_id)
-            count += 1
-            status = f"[{count}] 📸 {filepath.name}"
-            if args.gdrive and drive_service:
+            filepath = take_screenshot(screenshot_folder, prefix, use_gdrive, drive_service, drive_folder_id)
+            captured += 1
+            status = f"[{captured}] 📸 {filepath.name}"
+            if use_gdrive and drive_service:
                 status += " ☁️"
             print(status)
 
-            if args.count > 0 and count >= args.count:
-                print(f"\n✅ Completed {count} screenshots")
+            if count > 0 and captured >= count:
+                print(f"\n✅ Completed {captured} screenshots")
                 break
 
-            time.sleep(args.interval)
+            time.sleep(interval)
 
     except KeyboardInterrupt:
-        print(f"\n\n⏹️  Stopped. Total screenshots taken: {count}")
+        print(f"\n\n⏹️  Stopped. Total screenshots taken: {captured}")
 
 
 if __name__ == "__main__":

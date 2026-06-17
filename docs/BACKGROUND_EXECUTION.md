@@ -15,9 +15,12 @@ Crea un archivo `start_screenshots.bat`:
 
 ```batch
 @echo off
-cd /d "E:\Users\maracudev\DevDrive\hobby\background-screenshot"
-start "" ".venv\Scripts\pythonw.exe" screenshot_capture.py -i 60 -g
+set "PROJECT_DIR=%~dp0"
+cd /d "%PROJECT_DIR%"
+start "" "%PROJECT_DIR%.venv\Scripts\pythonw.exe" "%PROJECT_DIR%screenshot_capture.py" -i 60 -g
 ```
+
+> ` %~dp0 ` toma la carpeta donde está el archivo `.bat`, así que el script funciona sin depender de una ruta fija como `C:\Users\...`.
 
 **Uso:**
 1. Doble clic en `start_screenshots.bat`
@@ -41,6 +44,10 @@ start "" ".venv\Scripts\pythonw.exe" screenshot_capture.py -i 60 -g
 
 Ejecuta automáticamente al iniciar Windows o en horarios específicos.
 
+> Antes de usar cualquier método de background, asegúrate de tener un [config.yaml](../config.yaml) válido y correcto.
+>
+> El programa no crea una configuración automática si ese archivo falta.
+
 **Configuración:**
 
 1. Abre **Task Scheduler** (Programador de tareas)
@@ -59,9 +66,11 @@ Ejecuta automáticamente al iniciar Windows o en horarios específicos.
 
 4. **Action** (Acción):
    - **Start a program**
-   - Program: `E:\Users\maracudev\DevDrive\hobby\background-screenshot\.venv\Scripts\python.exe`
-   - Arguments: `screenshot_capture.py -i 60 -g`
-   - Start in: `E:\Users\maracudev\DevDrive\hobby\background-screenshot`
+   - Program: `"<ruta-al-proyecto>\.venv\Scripts\python.exe"`
+   - Arguments: `"<ruta-al-proyecto>\src\screenshot_capture.py" -i 60 -g`
+   - Start in: `"<ruta-al-proyecto>"`
+
+> Sustituye `<ruta-al-proyecto>` por la carpeta donde tienes el repositorio. Si prefieres, puedes usar la ruta absoluta del proyecto en tu máquina.
 
 5. **Settings** (Configuración adicional):
    - ✅ Allow task to be run on demand

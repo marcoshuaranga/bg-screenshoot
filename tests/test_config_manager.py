@@ -4,22 +4,19 @@ from pathlib import Path
 
 import pytest
 
-from src.config_manager import DEFAULT_CONFIG, Config
+from src.config_manager import Config
 
 
 class TestConfig:
     """Test Config class"""
 
-    def test_load_default_config(self, temp_dir, monkeypatch):
-        """Test loading default config when file doesn't exist"""
+    def test_missing_config_raises_error(self, temp_dir, monkeypatch):
+        """Test that a missing config file is treated as an error."""
         monkeypatch.chdir(temp_dir)
         config_path = temp_dir / "config.yaml"
 
-        config = Config(str(config_path))
-
-        assert config.interval == DEFAULT_CONFIG["screenshot"]["interval"]
-        assert config.prefix == DEFAULT_CONFIG["screenshot"]["prefix"]
-        assert config_path.exists()  # Should create file
+        with pytest.raises(FileNotFoundError):
+            Config(str(config_path))
 
     def test_load_existing_config(self, test_config):
         """Test loading existing config file"""
@@ -104,13 +101,11 @@ class TestConfig:
         assert test_config.circuit_timeout_duration == 60
         assert test_config.circuit_success_threshold == 2
 
-    def test_corrupted_config_loads_default(self, temp_dir, monkeypatch):
-        """Test that corrupted config file loads defaults"""
+    def test_corrupted_config_raises_error(self, temp_dir, monkeypatch):
+        """Test that corrupted config file raises a clear error."""
         monkeypatch.chdir(temp_dir)
         config_path = temp_dir / "config.yaml"
         config_path.write_text("invalid: yaml: content: [[[")
 
-        config = Config(str(config_path))
-
-        # Should load defaults instead of crashing
-        assert config.interval == DEFAULT_CONFIG["screenshot"]["interval"]
+        with pytest.raises(ValueError, match="Invalid YAML"):
+            Config(str(config_path))

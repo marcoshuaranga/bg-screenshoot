@@ -24,9 +24,19 @@ uv venv --python 3.13
 uv pip install -r requirements.txt
 ```
 
+2. Create your local configuration file before running the app:
+
+```bash
+copy config.example.yaml config.yaml
+```
+
+Then edit [config.yaml](config.yaml) and set your own local paths and preferences.
+
+> `config.yaml` is required at runtime. The project will not create a fallback config automatically.
+>
 > If you use Python 3.14 on Windows, Pillow may fail to build from source during installation.
 
-2. **(Optional)** Setup Google Drive integration:
+3. **(Optional)** Setup Google Drive integration:
    - Follow the guide in [docs/GDRIVE_SETUP.md](docs/GDRIVE_SETUP.md)
    - You'll need a `credentials.json` file from Google Cloud Console
 
@@ -55,18 +65,24 @@ Double-click: **`start_screenshots_silent.vbs`**
 4. Configure interval, folders, Google Drive
 5. Save and restart the app
 
-**Method 2: Edit config.yaml**
-Open `config.yaml` and modify:
+**Method 2: Edit your local config**
+
+- Copy [config.example.yaml](config.example.yaml) to `config.yaml`
+- Edit your local `config.yaml` with your own paths and settings
+- Keep `config.yaml` out of Git (it is ignored by default)
+- The app expects this file to exist and be valid before it starts
+
+Example values:
 
 ```yaml
 screenshot:
   interval: 60 # Seconds between screenshots
   prefix: "screenshot" # Filename prefix
-  local_folder: "E:/Users/maracudev/OneDrive/Imágenes/BG_Screenshots"
+  local_folder: "C:/Users/your-user/Pictures/Screenshots"
 
 google_drive:
-  enabled: true # Enable/disable Google Drive
-  folder: "BG_Screenshots" # Google Drive folder name
+  enabled: false # Set to true only after Google Drive is configured
+  folder: "BG_Screenshots"
 ```
 
 ### 🚀 Simple Background (Task Manager Control)
